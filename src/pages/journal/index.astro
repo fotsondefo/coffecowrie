@@ -1,0 +1,189 @@
+---
+import { getCollection } from 'astro:content'
+import CocoBaseLayout from '@/layouts/CocoBaseLayout.astro'
+
+const allArticles = await getCollection('journal', ({ data }) => !data.draft)
+const sorted = allArticles.sort((a, b) => b.data.publishDate.getTime() - a.data.publishDate.getTime())
+
+const featured  = sorted.find(a => a.data.featured) ?? sorted[0]
+const insights  = sorted.filter(a => a.data.section === 'insights').slice(0, 3)
+const interviews = sorted.filter(a => a.data.section === 'interviews').slice(0, 3)
+const cases     = sorted.filter(a => a.data.section === 'cases').slice(0, 3)
+
+function fmt(date: Date) {
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+---
+
+<CocoBaseLayout title="Journal" description="Insights, interviews, and case studies from tomorrow's leaders." activeNav="journal">
+
+  <!-- ── Loading Curtain ── -->
+  <div slot="loader" id="loader" class="fixed inset-0 z-[100] bg-coco-green flex flex-col items-center justify-center transition-transform duration-1000 ease-[cubic-bezier(0.87,0,0.13,1)]">
+    <div class="overflow-hidden">
+      <h1 class="font-display text-7xl md:text-9xl text-coco-ivory tracking-tight transform translate-y-full transition-transform duration-700 delay-300" id="loader-text">JOURNAL</h1>
+    </div>
+    <div class="w-px h-0 bg-coco-orange mt-8 transition-all duration-500 delay-700" id="loader-line"></div>
+  </div>
+
+  <main class="w-full">
+
+    <!-- ── Featured Hero ── -->
+    {featured && (
+      <section class="relative pt-48 pb-32 px-6 md:px-20 min-h-[70vh] flex flex-col justify-end bg-coco-green overflow-hidden" id="hero">
+        <div class="absolute inset-0 z-0">
+          {featured.data.heroImage && (
+            <img src={featured.data.heroImage.src} class="w-full h-full object-cover opacity-30 grayscale mix-blend-luminosity" alt={featured.data.heroImage.alt || ''}>
+          )}
+          <div class="absolute inset-0 bg-gradient-to-t from-coco-green via-coco-green/80 to-transparent"></div>
+        </div>
+
+        <div class="relative z-10 w-full max-w-[1800px] mx-auto">
+          <div class="max-w-3xl">
+            <div class="overflow-hidden mb-6">
+              <span class="inline-block text-coco-lime text-sm font-normal tracking-[0.15em] uppercase opacity-0 animate-[fadeIn_1s_ease_1s_forwards] border border-coco-lime/30 rounded-full px-4 py-1.5">Featured</span>
+            </div>
+            <h1 class="font-display font-normal text-5xl md:text-7xl lg:text-8xl leading-[0.9] tracking-tight text-coco-ivory mb-8 reveal-text" id="hero-title">
+              {featured.data.title.toUpperCase()}
+            </h1>
+            <p class="font-serif text-xl md:text-2xl text-coco-ivory/70 leading-relaxed mb-10 max-w-2xl">
+              {featured.data.description}
+            </p>
+            <a href={`/journal/${featured.id}`} class="inline-flex items-center gap-4 text-sm font-normal tracking-[0.15em] uppercase text-coco-ivory group opacity-0 animate-[fadeIn_1s_ease_1.5s_forwards] hover-trigger" data-cursor="READ">
+              <span class="border-b border-coco-orange pb-1 group-hover:text-coco-orange transition-colors">Read Article</span>
+              <i data-lucide="arrow-right" class="w-4 h-4 text-coco-orange group-hover:translate-x-2 transition-transform" stroke-width="1.5"></i>
+            </a>
+          </div>
+        </div>
+      </section>
+    )}
+
+    <!-- ── Latest Insights ── -->
+    {insights.length > 0 && (
+      <section class="py-24 px-6 md:px-20 max-w-[1800px] mx-auto bg-coco-ivory">
+        <div class="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6 border-b border-coco-green/10 pb-6">
+          <h2 class="font-display text-3xl md:text-4xl text-coco-green tracking-tight font-normal reveal-text">LATEST INSIGHTS</h2>
+          <a href="#" class="inline-flex items-center gap-2 text-sm font-normal tracking-[0.15em] uppercase text-coco-orange hover:text-coco-green transition-colors group">
+            View All <i data-lucide="arrow-right" class="w-4 h-4 group-hover:translate-x-1 transition-transform" stroke-width="1.5"></i>
+          </a>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-x-12 gap-y-16">
+          {insights.map(article => (
+            <article class="group cursor-pointer hover-trigger flex flex-col" data-cursor="READ">
+              <span class="text-sm uppercase tracking-[0.15em] text-coco-orange font-normal mb-4 block">{article.data.category}</span>
+              <a href={`/journal/${article.id}`}>
+                <h3 class="font-display text-2xl md:text-3xl text-coco-green leading-tight font-normal tracking-tight group-hover:text-coco-orange transition-colors mb-6">
+                  {article.data.title}
+                </h3>
+              </a>
+              <div class="mt-auto pt-6 border-t border-coco-green/10 flex items-center justify-between">
+                <span class="font-serif text-base text-coco-green/70 italic">By {article.data.author}</span>
+                <span class="text-sm text-coco-green/40 uppercase tracking-widest">{fmt(article.data.publishDate)}</span>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+    )}
+
+    <!-- ── Interviews ── -->
+    {interviews.length > 0 && (
+      <section class="py-24 px-6 md:px-20 max-w-[1800px] mx-auto bg-coco-ivory border-t border-coco-green/5">
+        <div class="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6 border-b border-coco-green/10 pb-6">
+          <h2 class="font-display text-3xl md:text-4xl text-coco-green tracking-tight font-normal reveal-text">INTERVIEWS</h2>
+          <a href="#" class="inline-flex items-center gap-2 text-sm font-normal tracking-[0.15em] uppercase text-coco-orange hover:text-coco-green transition-colors group">
+            View All <i data-lucide="arrow-right" class="w-4 h-4 group-hover:translate-x-1 transition-transform" stroke-width="1.5"></i>
+          </a>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-x-12 gap-y-16">
+          {interviews.map(article => (
+            <article class="group cursor-pointer hover-trigger flex flex-col" data-cursor="READ">
+              <span class="text-sm uppercase tracking-[0.15em] text-coco-orange font-normal mb-4 block">{article.data.category}</span>
+              <a href={`/journal/${article.id}`}>
+                <h3 class="font-display text-2xl md:text-3xl text-coco-green leading-tight font-normal tracking-tight group-hover:text-coco-orange transition-colors mb-6">
+                  {article.data.title}
+                </h3>
+              </a>
+              <div class="mt-auto pt-6 border-t border-coco-green/10 flex items-center justify-between">
+                <span class="font-serif text-base text-coco-green/70 italic">{article.data.author}</span>
+                <span class="text-sm text-coco-green/40 uppercase tracking-widest">{fmt(article.data.publishDate)}</span>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+    )}
+
+    <!-- ── Case Studies ── -->
+    {cases.length > 0 && (
+      <section class="py-24 px-6 md:px-20 max-w-[1800px] mx-auto bg-coco-ivory border-t border-coco-green/5 pb-32">
+        <div class="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6 border-b border-coco-green/10 pb-6">
+          <h2 class="font-display text-3xl md:text-4xl text-coco-green tracking-tight font-normal reveal-text">CASE STUDIES</h2>
+          <a href="#" class="inline-flex items-center gap-2 text-sm font-normal tracking-[0.15em] uppercase text-coco-orange hover:text-coco-green transition-colors group">
+            View All <i data-lucide="arrow-right" class="w-4 h-4 group-hover:translate-x-1 transition-transform" stroke-width="1.5"></i>
+          </a>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-x-12 gap-y-16">
+          {cases.map(article => (
+            <article class="group cursor-pointer hover-trigger flex flex-col" data-cursor="READ">
+              <span class="text-sm uppercase tracking-[0.15em] text-coco-orange font-normal mb-4 block">{article.data.category}</span>
+              <a href={`/journal/${article.id}`}>
+                <h3 class="font-display text-2xl md:text-3xl text-coco-green leading-tight font-normal tracking-tight group-hover:text-coco-orange transition-colors mb-6">
+                  {article.data.title}
+                </h3>
+              </a>
+              <div class="mt-auto pt-6 border-t border-coco-green/10 flex items-center justify-between">
+                <span class="font-serif text-base text-coco-green/70 italic">{article.data.author}</span>
+                <span class="text-sm text-coco-green/40 uppercase tracking-widest">{fmt(article.data.publishDate)}</span>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+    )}
+
+    <!-- ── Newsletter ── -->
+    <section class="bg-[#111] py-20 px-6 md:px-20 text-coco-ivory relative overflow-hidden">
+      <div class="max-w-[1800px] mx-auto flex flex-col md:flex-row items-center justify-between gap-12 relative z-10">
+        <div class="w-full md:w-1/2">
+          <h2 class="font-display text-3xl md:text-4xl font-normal tracking-tight mb-4 text-white">RECEIVE OUR PUBLICATIONS</h2>
+          <p class="font-serif text-xl text-coco-ivory/60 italic max-w-md">Subscribe to get curated insights, essays, and reports delivered directly to your inbox.</p>
+        </div>
+        <div class="w-full md:w-5/12">
+          <form class="flex border-b border-coco-ivory/20 pb-4 group focus-within:border-coco-orange transition-colors">
+            <input type="email" placeholder="Enter your email address" class="bg-transparent w-full outline-none placeholder:text-coco-ivory/30 font-sans text-base text-white">
+            <button type="button" class="text-sm font-normal tracking-[0.15em] uppercase text-coco-orange hover:text-white transition-colors whitespace-nowrap ml-6">
+              Subscribe
+            </button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</CocoBaseLayout>
+
+<script slot="scripts" is:inline>
+  // ── Journal page loading curtain ──
+  window.addEventListener('load', () => {
+    const loader = document.getElementById('loader');
+    const text   = document.getElementById('loader-text');
+    const line   = document.getElementById('loader-line');
+    if (!loader || !text || !line) return;
+
+    text.style.transform = 'translateY(0)';
+    setTimeout(() => { line.style.width = '100px'; }, 500);
+    setTimeout(() => {
+      loader.style.transform = 'translateY(-100%)';
+      const heroTitle = document.querySelector('#hero-title');
+      if (heroTitle) {
+        heroTitle.classList.add('active');
+        heroTitle.querySelectorAll('.char').forEach((char, i) => {
+          setTimeout(() => {
+            char.style.transform = 'translateY(0)';
+            char.style.opacity   = '1';
+          }, 800 + i * 40);
+        });
+      }
+    }, 1800);
+  });
+</script>

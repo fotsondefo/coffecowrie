@@ -1,0 +1,121 @@
+---
+import { getCollection, render } from 'astro:content'
+import CocoBaseLayout from '@/layouts/CocoBaseLayout.astro'
+
+export const prerender = true
+
+export async function getStaticPaths() {
+  const articles = await getCollection('journal', ({ data }) => !data.draft)
+  return articles.map(article => ({
+    params: { slug: article.id },
+    props:  { article },
+  }))
+}
+
+const { article } = Astro.props
+const { Content }  = await render(article)
+
+const readTime = Math.ceil(((article.body ?? '').split(/\s+/).length || 200) / 200)
+
+function fmtDate(d: Date) {
+  return d.toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })
+}
+---
+
+<CocoBaseLayout
+  title={article.data.title}
+  description={article.data.description}
+  activeNav="journal"
+>
+  <main class="pt-8 md:pt-12">
+
+    <!-- ── Hero Image ── -->
+    <section class="w-full px-4 md:px-8 mb-16 md:mb-24">
+      <div class="max-w-[1600px] mx-auto h-[40vh] md:h-[60vh] overflow-hidden bg-coco-green">
+        {article.data.heroImage ? (
+          <img
+            src={article.data.heroImage.src}
+            alt={article.data.heroImage.alt || article.data.title}
+            class="w-full h-full object-cover mix-blend-luminosity opacity-80"
+          />
+        ) : (
+          <div class="w-full h-full flex items-center justify-center opacity-20">
+            <i data-lucide="file-text" class="w-24 h-24 text-coco-ivory" stroke-width="0.5"></i>
+          </div>
+        )}
+      </div>
+    </section>
+
+    <!-- ── Article Container ── -->
+    <article class="max-w-3xl mx-auto px-6 pb-24">
+
+      <!-- Header -->
+      <header class="mb-16">
+        <div class="flex items-center gap-4 text-xs font-normal tracking-[0.15em] uppercase text-coco-orange mb-6">
+          <span>{article.data.category}</span>
+          <span class="w-1 h-1 rounded-full bg-coco-orange"></span>
+          <span>{readTime} Min Read</span>
+        </div>
+
+        <h1 class="font-display font-normal text-4xl md:text-5xl lg:text-6xl text-coco-green tracking-tight leading-[1.1] mb-8 reveal-text">
+          {article.data.title.toUpperCase()}
+        </h1>
+
+        <div class="flex items-center gap-4 border-t border-coco-green/10 pt-6">
+          <div class="w-12 h-12 rounded-full bg-coco-green/10 flex items-center justify-center flex-shrink-0">
+            <i data-lucide="user" class="w-5 h-5 text-coco-green/40" stroke-width="1.5"></i>
+          </div>
+          <div>
+            <p class="font-serif text-xl text-coco-green italic">{article.data.author}</p>
+            <p class="text-xs font-sans uppercase tracking-[0.15em] text-coco-green/50 mt-1">{fmtDate(article.data.publishDate)}</p>
+          </div>
+        </div>
+      </header>
+
+      <!-- Body (rendered markdown) -->
+      <div class="coco-prose">
+        <Content />
+      </div>
+
+      <!-- Tags & Share -->
+      <div class="mt-16 pt-8 border-t border-coco-green/10 flex flex-col md:flex-row items-center justify-between gap-6">
+        <div class="flex gap-4 flex-wrap">
+          <span class="text-xs font-sans uppercase tracking-[0.15em] text-coco-green/40 border border-coco-green/10 px-4 py-2 rounded-full">{article.data.category}</span>
+          <span class="text-xs font-sans uppercase tracking-[0.15em] text-coco-green/40 border border-coco-green/10 px-4 py-2 rounded-full">{article.data.section}</span>
+        </div>
+        <div class="flex items-center gap-4 text-sm font-sans tracking-[0.15em] uppercase text-coco-green">
+          <span class="opacity-50">Share</span>
+          <a href="#" class="hover:text-coco-orange transition-colors"><i data-lucide="twitter" class="w-4 h-4" stroke-width="1.5"></i></a>
+          <a href="#" class="hover:text-coco-orange transition-colors"><i data-lucide="linkedin" class="w-4 h-4" stroke-width="1.5"></i></a>
+          <a href="#" class="hover:text-coco-orange transition-colors"><i data-lucide="link" class="w-4 h-4" stroke-width="1.5"></i></a>
+        </div>
+      </div>
+
+    </article>
+  </main>
+
+  <!-- ── Newsletter ── -->
+  <section class="bg-coco-green/5 py-32 px-6 border-t border-coco-green/10 relative overflow-hidden">
+    <div class="max-w-2xl mx-auto text-center relative z-10">
+      <h2 class="font-display font-normal text-3xl md:text-4xl text-coco-green tracking-tight mb-4">SUBSCRIBE TO OUR JOURNAL</h2>
+      <p class="font-serif text-xl text-coco-green/70 mb-10 italic">Receive curated insights, essays, and reports delivered directly to your inbox.</p>
+      <form class="flex flex-col sm:flex-row gap-0 max-w-lg mx-auto border border-coco-green/20 focus-within:border-coco-orange transition-colors bg-coco-ivory">
+        <input type="email" placeholder="Enter your email address" class="flex-1 bg-transparent px-6 py-4 outline-none font-sans text-base text-coco-green placeholder:text-coco-green/40">
+        <button type="button" class="bg-coco-green text-coco-ivory px-8 py-4 uppercase text-xs tracking-[0.15em] font-normal hover:bg-coco-orange transition-colors whitespace-nowrap">
+          Subscribe
+        </button>
+      </form>
+    </div>
+  </section>
+
+  <!-- Back to journal -->
+  <div class="bg-coco-ivory px-6 py-6 border-t border-coco-green/5">
+    <div class="max-w-3xl mx-auto">
+      <a href="/journal" class="inline-flex items-center gap-3 text-sm font-sans uppercase tracking-[0.15em] text-coco-green/60 hover:text-coco-orange transition-colors group">
+        <i data-lucide="arrow-left" class="w-4 h-4 group-hover:-translate-x-1 transition-transform" stroke-width="1.5"></i>
+        Back to Journal
+      </a>
+    </div>
+  </div>
+
+</CocoBaseLayout>
